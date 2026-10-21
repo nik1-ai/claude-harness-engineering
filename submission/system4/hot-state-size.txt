@@ -1,0 +1,2 @@
+-rw------- 1 student student 965 Oct 21 21:00 data/hot_state.json
+1 data/shift_scratchpad.jsonl

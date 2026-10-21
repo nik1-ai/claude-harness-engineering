@@ -1,6 +1,11 @@
 .DS_Store
 .vscode
 
+# Secrets
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.py[cod]
@@ -13,9 +18,15 @@ venv/
 env/
 uv.lock
 
+# Node
+node_modules/
+
 # Test / type caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Zip
+submission.zip
