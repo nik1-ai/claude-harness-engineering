@@ -1,0 +1,291 @@
+=== S1 loop.py
+4:- Control flow is driven by `response.stop_reason`.
+5:- Loop continues iff stop_reason == "tool_use".
+6:- Loop returns iff stop_reason == "end_turn".
+7:- Any other stop_reason raises UnexpectedStopReason.
+34:    def create(self, **kwargs: Any) -> Any: ...
+46:def run(
+58:    """Run the agentic loop until the model returns stop_reason == "end_turn".
+60:    The loop condition is `response.stop_reason == "tool_use"` — nothing else.
+90:            if getattr(b, "type", None) == "tool_use"
+95:                "stop_reason": response.stop_reason,
+103:        if response.stop_reason == "end_turn":
+113:        if response.stop_reason == "tool_use":
+117:                if getattr(block, "type", None) != "tool_use":
+123:                        "tool_use_id": block.id,
+131:            f"turn {turn}: unexpected stop_reason={response.stop_reason!r}"
+=== S1 run.py
+52:    max_wall_clock_s: float,
+64:        max_wall_clock_s=max_wall_clock_s,
+97:    """Deterministic backstop: the model ended its turn without routing or escalating.
+107:            "reason": "model ended its turn without a terminal action (deterministic backstop)",
+244:            max_wall_clock_s=args.max_wall_clock_s,
+=== S1 tools
+33:        "description": (
+34-            "Look up a policyholder's coverage record. Use this early in the "
+35-            "conversation to confirm the policy exists, what is covered, and the "
+--
+41:                "policy_id": {"type": "string", "description": "Policy identifier, e.g. POL-1001"}
+42-            },
+43-            "required": ["policy_id"],
+--
+48:        "description": (
+49-            "Record one normalized fact extracted from the claimant's statements "
+50-            "(e.g., incident_date, location, description, items_lost, injury_party). "
+--
+58:                    "description": "Snake_case field name, e.g. incident_date or location",
+59-                },
+60:                "value": {"type": "string", "description": "The fact as a short string"},
+61-            },
+62-            "required": ["field", "value"],
+--
+67:        "description": (
+68-            "Commit to a claim type with a confidence score and rationale. Call "
+69-            "this exactly once per claim, after enough facts and clarifications "
+--
+80:                    "description": "0.0 = no idea; 1.0 = certain",
+81-                },
+82-                "rationale": {
+--
+84:                    "description": "One sentence explaining why this type fits the facts",
+85-                },
+86-            },
+--
+92:        "description": (
+93-            "Commit to a severity bucket with a rationale. Call this exactly once "
+94-            "per claim, after classification. Severity reflects damage magnitude, "
+--
+108:        "description": (
+109-            "Ask the claimant ONE clarifying question to disambiguate the claim "
+110-            "type or fill a critical missing fact. Use only when the claim type is "
+--
+117:                "question": {"type": "string", "description": "A single specific question"},
+118-                "ambiguity_between": {
+119-                    "type": "array",
+--
+122:                    "description": "Candidate claim types the question is meant to distinguish",
+123-                },
+124-            },
+--
+130:        "description": (
+131-            "TERMINAL TOOL. Route this claim to the matching adjuster queue. "
+132-            "Call this exactly once when classification confidence is at least "
+--
+142:                    "description": "Two-to-three sentence summary the adjuster will read first",
+143-                },
+144-            },
+--
+150:        "description": (
+151-            "TERMINAL TOOL. Escalate this claim to a human reviewer when "
+152-            "classification confidence is below 0.6 even after clarification, or "
+--
+163:                    "description": "Short reason: unresolved_ambiguity | low_confidence | missing_facts | policy_dispute | other",
+164-                },
+=== S1 loop.py
+4:- Control flow is driven by `response.stop_reason`.
+5:- Loop continues iff stop_reason == "tool_use".
+6:- Loop returns iff stop_reason == "end_turn".
+7:- Any other stop_reason raises UnexpectedStopReason.
+34:    def create(self, **kwargs: Any) -> Any: ...
+46:def run(
+58:    """Run the agentic loop until the model returns stop_reason == "end_turn".
+60:    The loop condition is `response.stop_reason == "tool_use"` — nothing else.
+90:            if getattr(b, "type", None) == "tool_use"
+95:                "stop_reason": response.stop_reason,
+103:        if response.stop_reason == "end_turn":
+113:        if response.stop_reason == "tool_use":
+117:                if getattr(block, "type", None) != "tool_use":
+123:                        "tool_use_id": block.id,
+131:            f"turn {turn}: unexpected stop_reason={response.stop_reason!r}"
+=== S1 run.py
+52:    max_wall_clock_s: float,
+64:        max_wall_clock_s=max_wall_clock_s,
+97:    """Deterministic backstop: the model ended its turn without routing or escalating.
+107:            "reason": "model ended its turn without a terminal action (deterministic backstop)",
+244:            max_wall_clock_s=args.max_wall_clock_s,
+=== S2 budget.json
+{
+  "token_counter_methodology": "Anthropic messages.count_tokens endpoint (model-authoritative)",
+  "baseline_tokens": 38708,
+  "assembled_tokens": 16843,
+  "reduction_pct": 56.49,
+  "per_section_tokens": {
+    "case_facts": 204,
+    "resolved_refund": 394,
+    "resolved_subscription": 474,
+    "active": 15789
+  },
+  "compression_api": {
+    "refund": {
+      "input_tokens": 12334,
+      "output_tokens": 381
+    },
+    "subscription": {
+      "input_tokens": 11475,
+      "output_tokens": 461
+    }
+  }
+}
+=== S2 eval.jsonl
+{"question_id": "Q1", "question": "What was the actual refund amount processed for order ORD-77310?", "expected_fragment": "22.14", "model_answer": "According to the case facts, the refund amount processed for order ORD-77310 was 
+{"question_id": "Q2", "question": "Why did the customer cancel their subscription?", "expected_fragment": "duplicate", "model_answer": "According to the case facts, the customer's subscription (SUB-22119, Pantry Plus Monthly plan)
+{"question_id": "Q3", "question": "What is the failure code on the current payment-method update?", "expected_fragment": "AVS_MISMATCH", "model_answer": "According to the case facts, the failure code on the current payment-method 
+{"question_id": "Q4", "question": "What is the last-4 of the new card the customer is trying to add?", "expected_fragment": "7782", "model_answer": "The last-4 of the new card the customer is trying to add is **7782**.\n\nThis is 
+{"question_id": "Q5", "question": "Did the customer receive their subscription proration refund?", "expected_fragment": "prorated", "model_answer": "# Yes, the customer received their subscription proration refund.\n\nAccording to
+{"question_id": "Q6", "question": "What is the structured status of the payment-method update issue (use the exact status token from the case record, not a paraphrase)?", "expected_fragment": "in_progress", "model_answer": "Accord
+=== S2 eval_control.jsonl
+{"question_id": "Q1", "question": "What was the actual refund amount processed for order ORD-77310?", "expected_fragment": "22.14", "model_answer": "According to the context provided, the refund amount processed for order ORD-7731
+{"question_id": "Q6", "question": "What is the structured status of the payment-method update issue (use the exact status token from the case record, not a paraphrase)?", "expected_fragment": "in_progress", "model_answer": "I cann
+=== S2 model/cost
+/workspace/Engineer a Long-Conversation Context Strategy for a Retail Support Copilot/04-assemble-and-locate/solution/retail_context/run.py:7:    python -m retail_context.run --eval --model claude-son
+/workspace/Engineer a Long-Conversation Context Strategy for a Retail Support Copilot/04-assemble-and-locate/solution/retail_context/client.py:28:DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+=== S2 case_facts_call
+{
+  "model": "claude-haiku-4-5-20251001",
+  "input_tokens": 39209,
+  "output_tokens": 197,
+  "raw_output": {
+    "customer_id": "CUST-88421",
+    "refund_order_id": "ORD-77310",
+    "refund_amount_usd": 22.14,
+    "refund_status": "processed",
+    "subscription_id": "SUB-22119",
+    "subscription_plan": "Pantry Plus Monthly",
+    "subscription_cancel_reason": "duplicate_charge",
+    "subscription_status": "cancelled_with_prorated_refund",
+    "active_payment_method_last4": "4242",
+    "new_payment_method_last4": "7782",
+    "payment_update_failure_code": "AVS_MISMATCH",
+    "payment_update_sta=== S3 frontmatter
+/workspace/submission/system3/dot-claude/commands/review.md:2:description: Run the e-commerce team's PR review checklist against a pull request or local diff
+/workspace/submission/system3/dot-claude/commands/review.md:4:allowed-tools:
+/workspace/submission/system3/dot-claude/commands/review.md:5:  - Read
+/workspace/submission/system3/dot-claude/commands/review.md:6:  - Grep
+/workspace/submission/system3/dot-claude/commands/review.md:7:  - Glob
+/workspace/submission/system3/dot-claude/commands/review.md:8:  - Bash(git diff:*)
+/workspace/submission/system3/dot-claude/commands/review.md:9:  - Bash(git log:*)
+/workspace/submission/system3/dot-claude/commands/review.md:10:  - Bash(git show:*)
+/workspace/submission/system3/dot-claude/commands/review.md:11:  - Bash(git status:*)
+/workspace/submission/system3/dot-claude/commands/review.md:12:  - Bash(gh pr diff:*)
+/workspace/submission/system3/dot-claude/commands/review.md:13:  - Bash(gh pr view:*)
+/workspace/submission/system3/dot-claude/commands/review.md:14:  - Bash(gh pr checks:*)
+/workspace/submission/system3/dot-claude/rules/react.md:2:description: Conventions for React components and pages
+/workspace/submission/system3/dot-claude/rules/react.md:3:paths:
+/workspace/submission/system3/dot-claude/rules/react.md:4:  - "src/components/**/*"
+/workspace/submission/system3/dot-claude/rules/react.md:5:  - "src/pages/**/*"
+/workspace/submission/system3/dot-claude/rules/tests.md:2:description: Conventions for test files (co-located *.test.ts and *.test.tsx)
+/workspace/submission/system3/dot-claude/rules/tests.md:3:paths:
+/workspace/submission/system3/dot-claude/rules/tests.md:4:  - "**/*.test.tsx"
+/workspace/submission/system3/dot-claude/rules/tests.md:5:  - "**/*.test.ts"
+/workspace/submission/system3/dot-claude/rules/api.md:2:description: Conventions for Node.js API handlers
+/workspace/submission/system3/dot-claude/rules/api.md:3:paths:
+/workspace/submission/system3/dot-claude/rules/api.md:4:  - "src/api/**/*"
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:2:name: deploy-check
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:3:description: Run read-only pre-deployment validation in a forked sub-agent and report a single pass/fail summary back to the main session
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:4:context: fork
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:6:allowed-tools:
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:7:  - Read
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:8:  - Grep
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:9:  - Glob
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:10:  - Bash(git status:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:11:  - Bash(git diff:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:12:  - Bash(git log:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:13:  - Bash(git rev-parse:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:14:  - Bash(git ls-files:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:15:  - Bash(gh pr view:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:16:  - Bash(gh pr checks:*)
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:64:  - name: uncommitted-changes
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:67:  - name: migrations
+/workspace/submission/system3/dot-claude/skills/deploy-check/SKILL.md:70:  - name: ci
+=== S3 CLAUDE.md
+# E-Commerce Platform — Shared Claude Code Conventions
+
+This file is the **project-level** entry point for the e-commerce monorepo. Every teammate's Claude session loads it automatically.
+
+## Scope: what belongs here vs. elsewhere
+
+Claude Code resolves configuration in a hierarchy:
+
+| Scope | Path | Purpose |
+|-------|------|---------|
+| **Project-level** | `./CLAUDE.md`, `.claude/standards/`, `.claude/rules/` | Conventions for *this* repo. Lives in git. Shared with the whole team. |
+| **User-level** | `~/.claude/CLAUDE.md`, `~/.claude/commands/`, `~/.claude/skills/` | Personal preferences. **Not shared via version control** — they stay on your laptop and never reach teammates. 
+| **Directory-level** | `path/CLAUDE.md` inside a subdir | Conventions narrower than the whole repo. We prefer `.claude/rules/` with glob `paths:` instead, so cross-cutting conventions (e.g. test file
+
+If something would only matter to you — your preferred commit-message style, your editor-specific snippets, a personal `/morning` summary command — put it under `~/.claude/`. Anything the whole te
+
+## Shared standards (modular via @-imports)
+
+The actual conventions live in focused files so this entry point stays scannable:
+
+- @.claude/standards/frontend.md
+- @.claude/standards/api.md
+- @.claude/standards/database.md
+- @.claude/standards/testing.md
+
+Path-scoped rules in [.claude/rules/](.claude/rules/) layer on top of these standards and activate only when Claude is editing matching files (React components, API handlers, test files).
+
+## Repository layout
+
+```
+=== S3 scope
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/CLAUDE.md:3:This file is the **project-level** entry point for the e-commerce monorepo. Every teammate's C
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/CLAUDE.md:11:| **Project-level** | `./CLAUDE.md`, `.claude/standards/`, `.claude/rules/` | Conventions for
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/CLAUDE.md:12:| **User-level** | `~/.claude/CLAUDE.md`, `~/.claude/commands/`, `~/.claude/skills/` | Person
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/CLAUDE.md:15:If something would only matter to you — your preferred commit-message style, your editor-sp
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/CLAUDE.md:41:**Convention isn't being followed?** Run `/memory` in your Claude Code session to see exactly
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/tests/test_us04_deploy_check_skill.py:74:        "Body must note personal-customization via ~/.claude/skil
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/tests/test_us01_claude_md_hierarchy.py:63:    """CLAUDE.md distinguishes project-level vs user-level scope
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/tests/test_us01_claude_md_hierarchy.py:64:    user-level is not shared via version control, and gives a us
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/tests/test_us01_claude_md_hierarchy.py:66:    assert result.mentions_user_level, "Must mention user-level 
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/tests/test_us01_claude_md_hierarchy.py:67:    assert result.mentions_project_level, "Must mention project-
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/tests/test_us01_claude_md_hierarchy.py:69:        "Must explicitly state user-level settings are not share
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/.claude/commands/review.md:130:- This command is project-scoped (`.claude/commands/review.md`) so everyone
+/workspace/Configure Claude Code for a Multi-Surface Monorepo Team/04-plan-mode-and-explore-decision-doc/solution/.claude/skills/deploy-check/SKILL.md:79:This skill is project-scoped (`.claude/skills/deploy-check/`) so t
+=== S3 skill line 5
+argument-hint: "[target-branch] (defaults to main)"
+=== S4 recovery.py
+1:"""Resume-vs-fresh decision logic for crash recovery.
+3:The 30-minute threshold is ~1/16 of an 8-hour shift cycle: a resume inside this
+5:treated as a stale partial that should be re-started from scratch with whatever
+16:STALE_RESUME_THRESHOLD_MINUTES = 30
+18:Decision = Literal["resume", "fresh"]
+21:def decide(state: ManifestState, now: datetime) -> Decision:
+23:        return "fresh"
+25:        return "fresh"
+27:    if now - last_step.ts <= timedelta(minutes=STALE_RESUME_THRESHOLD_MINUTES):
+28:        return "resume"
+29:    return "fresh"
+=== S4 warm.py
+1:"""Warm tier: SQLite-backed defect store with indexed `defects_since` query."""
+19:CREATE INDEX IF NOT EXISTS idx_defects_shift_ts ON defects(shift, ts);
+20:CREATE INDEX IF NOT EXISTS idx_defects_ts ON defects(ts);
+25:    def __init__(self, db_path: Path) -> None:
+28:    def _connect(self) -> sqlite3.Connection:
+33:    def initialize(self) -> None:
+38:    def insert_many(self, rows: Iterable[Mapping[str, Any]]) -> None:
+50:    def count(self) -> int:
+52:            cur = conn.execute("SELECT COUNT(*) FROM defects")
+55:    def fetch_by_id(self, defect_id: str) -> dict[str, Any] | None:
+57:            cur = conn.execute("SELECT * FROM defects WHERE id = ?", (defect_id,))
+61:    def column_names(self, table: str) -> list[str]:
+66:    def has_index_on(self, table: str, columns: tuple[str, ...]) -> bool:
+68:            indexes = conn.execute(f"PRAGMA index_list({table})").fetchall()
+69:            for idx in indexes:
+70:                cols = conn.execute(f"PRAGMA index_info({idx['name']})").fetchall()
+75:    def defects_since(self, since_ts: str, limit: int = 50) -> list[dict[str, Any]]:
+83:                "SELECT * FROM defects WHERE ts > ? ORDER BY ts DESC LIMIT ?",
+88:    def explain_defects_since(self, since_ts: str, limit: int = 50) -> list[tuple[Any, ...]]:
+92:                "SELECT * FROM defects WHERE ts > ? ORDER BY ts DESC LIMIT ?",
+=== S4 pipeline.py
+33:    warm: WarmStore, since_ts: str, limit: int = 50
+35:    return warm.defects_since(since_ts, limit=limit)
+90:    since_ts: str,
+93:    log.info("run_shift start: shift=%s since=%s", shift_id, since_ts)
+95:    new_defects = gather_new_defects(warm, since_ts, limit=50)
+131:            evidence=f"{len(new_defects)} new defects analyzed since {since_ts}",
+=== S4 defects.json count
+40
+=== S4 warm.sqlite
+table defects 40
+indexes [('sqlite_autoindex_defects_1',), ('idx_defects_shift_ts',), ('idx_defects_ts',)]
